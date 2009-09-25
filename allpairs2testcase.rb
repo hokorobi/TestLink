@@ -15,6 +15,7 @@ class ApTestcase
   @items
   @testcase
   @expectedResult
+  @@t = 0
   def initialize
     @items=[]
     @testcase = []
@@ -22,7 +23,7 @@ class ApTestcase
   end
   def print
     s="<TABLE>"
-    for i in 0..@items.size-2
+    for i in 0..@items.size-1
       s=s + "<TR>"
       s=s+"<TD>#{@items[i].split}</TD>"
       s=s+"<TD>#{@testcase[i].split}</TD>"
@@ -31,7 +32,8 @@ class ApTestcase
     s=s + "</TABLE>"
   end
   def getTitle
-    t=@testcase[0]
+    @@t = @@t + 1
+    @@t.to_s
   end
 end
 class AllpairsTestcase
@@ -56,18 +58,9 @@ class Allpairs2Testcase
   end
   def readFile(infile)
     f = File.open(infile,"r")
-    # skip first 2 lines
-    # if there are some information about "details" and/or "summary", get them.
-    s = f.gets.split("||")
-    if(s.first == "details")
-      @details = s[1]
-    end
-    s = f.gets.split("||")
-    if(s.first == "summary")
-      @summary = s[1]
-    end
     # get a label line
     s=f.gets
+    #puts Kconv.kconv(s, Kconv::SJIS, in_code = Kconv::EUC)
     items=s.split("\t")
     useExpRes = false
     if items.last.chomp == "ExpectedResult" then
@@ -75,9 +68,10 @@ class Allpairs2Testcase
       useExpRes = true
     end
     s=f.gets
-    while s !="\n"
+    while s !=nil
       tc=ApTestcase.new
       tc.items=items
+      #puts Kconv.kconv(s, Kconv::SJIS, in_code = Kconv::EUC)
       t=s.split("\t")
       tc.expectedResult = t.pop if useExpRes
       tc.testcase = t
@@ -86,9 +80,9 @@ class Allpairs2Testcase
     end
 
   end
-	def initTestSuite(name,details)
+  def initTestSuite(name,details)
     @csv2testcase.initTestSuite(name,details)
-	end
+  end
   def convXML(name_prefix="Test case No.",summary_prefix=@summary,steps_prefix="",expectedresults_prefix="")
     @allpairsTestcase.testcase.each{|tc|
       @csv2testcase.addTestcase(name_prefix + tc.getTitle,summary_prefix,steps_prefix + tc.print,expectedresults_prefix + tc.expectedResult)
@@ -98,10 +92,10 @@ class Allpairs2Testcase
     @csv2testcase.writeFile(outfile)
   end
   def main(infile,outfile)
-		readFile(infile)
+    readFile(infile)
     initTestSuite(infile,@details)
     convXML
-		writeFile(outfile)
+    writeFile(outfile)
   end
 end
 
